@@ -11,7 +11,9 @@ var todos = [{
     text: 'firs todo test'
 }, {
     _id: new ObjectID(),
-    text: 'second todo test'
+    text: 'second todo test',
+    completed: true,
+    completedAt: 444
 }];
 
 beforeEach((done) => {
@@ -149,5 +151,61 @@ describe('DELETE /todos/id:', () => {
             .end(done);
     });
 
+});
+
+describe('PATCH /todos/:id', () => {
+    it('should update the todo', (done) => {
+        var id = todos[0]._id.toHexString();
+        var todo = {text: "update from test", completed: true};
+        request(app)
+            .patch(`/todos/${id}`)
+            .send(todo)
+            .expect(200)
+            .expect((res) => {
+                res.body.todo.text.should.equal(todo.text);
+                res.body.todo.completed.should.equal(true);
+                res.body.todo.completedAt.should.be.a("number");
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                Todo.findById(todos[0]._id).then((td) => {
+                    td.text.should.equal(todo.text);
+                    td.completed.should.equal(todo.completed);
+                    td.completedAt.should.be.a("number");
+                    done();
+                }).catch((err) => done(err));
+            });
+
+    });
+
+    it('should clear completedAt when todo is not completed', (done) => {
+        var id = todos[1]._id.toHexString();
+        var todo = {text: "update second todo from test", completed: false};
+
+        request(app)
+            .patch(`/todos/${id}`)
+            .send(todo)
+            .expect(200)
+            .expect((res) => {
+                res.body.todo.text.should.equal(todo.text);
+                res.body.todo.completed.should.equal(false);
+                should.not.exist(res.body.todo.completedAt);
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                Todo.findById(todos[1]._id).then((td) => {
+                    td.text.should.equal(todo.text);
+                    td.completed.should.equal(todo.completed);
+                    should.not.exist(td.completedAt);
+                    done();
+                }).catch((err) => done(err));
+            });
+    });
 })
 
