@@ -246,7 +246,7 @@ describe('POST /users', () => {
                     user.should.be.exist;
                     user.password.should.not.equal(password);
                     done();
-                });
+                }).catch((e) => done(e));
             });
     });
 
@@ -273,3 +273,53 @@ describe('POST /users', () => {
     });
 });
 
+describe('POST /users/login', () => {
+    it('should login and return auth token', (done) => {
+        var email = users[0].email;
+        var password = users[0].password;
+
+        request(app)
+            .post('/users/login')
+            .send({ email, password })
+            .expect(200)
+            .expect((res) => {
+                res.headers['x-auth'].should.exist;
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findById(users[0]._id).then((user) => {
+                    user.tokens[1].should.deep.include({
+                        access: 'auth',
+                        token: res.headers['x-auth']
+                    });
+                    done();
+                }).catch((e) => done(e));
+            });
+    });
+
+    it('should reject invalid login', (done) => {
+        var email = users[0].email;
+        var password = users[1].password;
+
+        request(app)
+            .post('/users/login')
+            .send({ email, password })
+            .expect(400)
+            .expect((res) => {
+                chai.expect(res.headers['x-auth']).to.not.exist;
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findById(users[1]._id).then((user) => {
+                    chai.expect(user.tokens).to.have.lengthOf(0);
+                    done();
+                }).catch((e) => done(e));
+            });
+    });
+});
