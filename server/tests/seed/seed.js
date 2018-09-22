@@ -12,22 +12,28 @@ var users = [{
     password: 'personOnePass',
     tokens:[{
         access: 'auth',
-        token: jwt.sign({_id: personOneId.toHexString(), access: 'auth'}, 'abc123').toString()
+        token: jwt.sign({_id: personOneId.toHexString(), access: 'auth'}, process.env.SECRET_KEY).toString()
     }]
 }, {
     _id: personTwoId,
     email: 'amir1908@gmail.com',
-    password: 'personTwoPass'
+    password: 'personTwoPass',
+    tokens:[{
+        access: 'auth',
+        token: jwt.sign({_id: personTwoId.toHexString(), access: 'auth'}, process.env.SECRET_KEY).toString()
+    }]
 }];
 
 var todos = [{
     _id: new ObjectID(),
-    text: 'firs todo test'
+    text: 'firs todo test',
+    _creator: personOneId
 }, {
     _id: new ObjectID(),
     text: 'second todo test',
     completed: true,
-    completedAt: 444
+    completedAt: 444,
+    _creator: personTwoId
 }];
 
 const populateUsers = (done) => {
